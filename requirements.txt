@@ -1,0 +1,15 @@
+seaborn
+matplotlib
+numpy
+pandas
+Click
+clickclick
+pyyaml
+torch
+torchvision
+pytorch-lightning
+tensorboard
+jax[cpu]
+dm-haiku
+optax
+notebook
