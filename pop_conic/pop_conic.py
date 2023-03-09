@@ -30,7 +30,7 @@ def sample_neurons(n_samples=1):
 def forward_states(a, b, x):
     h_1 = np.matmul(x, b.T)
     x_1 = np.maximum(h_1, 0)
-    y_hat = np.matmul(x_1, a.T)
+    y_hat = np.matmul(x_1, a.T) / a.shape[1]
 
     return h_1, x_1, y_hat
 
@@ -43,8 +43,7 @@ def initialize_neurons(x, y, n_neurons=1):
 
     b_hat = sample_neurons(n_samples=n_neurons)
     x_1 = np.maximum(np.matmul(x, b_hat.T), 0)
-    da = (y - y_hat) * x_1
-    a_hat = ALPHA * np.mean(da, axis=0)
+    a_hat = - ALPHA * np.mean((y_hat - y) * x_1, axis=0)
 
     a = np.append(a, a_hat).reshape(1, n_neurons)
     b = np.append(b, b_hat).reshape(n_neurons, -1)
@@ -53,21 +52,13 @@ def initialize_neurons(x, y, n_neurons=1):
 
 
 def update(a, b, x, y, n_updates=1, compute_loss=True):
-    # print('a.shape', a.shape)
-    # print('b.shape', b.shape)
     for _ in range(n_updates):
         h_1, x_1, y_hat = forward_states(a, b, x)
         delta = y_hat - y
-        dh_1 = relu_prime(h_1)
-        # print('delta.shape', delta.shape)
-        # print('x_1.shape', x_1.shape)
-        # print('dh_1.shape', dh_1.shape)
-        # print('np.diag(a.reshape(-1)).shape', np.diag(a.reshape(-1)).shape)
-        dh = np.matmul(relu_prime(h_1), np.diag(a.reshape(-1))).T
-        # print('dh.shape', dh.shape)
-        b = b - BASE_LR * np.matmul(dh,
-                                    delta * x_train) / N_TRAIN
-        a = a - BASE_LR * np.mean(delta * x_1, axis=0)
+        # dh = np.matmul(relu_prime(h_1), np.diag(a.reshape(-1))).T
+        b = b - BASE_LR * np.matmul(np.matmul(relu_prime(h_1), np.diag(a.reshape(-1))).T,
+                                    delta * x) / N_TRAIN
+        a = a - BASE_LR * np.mean(delta * x_1, axis=0, keepdims=True)
 
         loss = -1.0
         if compute_loss:
@@ -79,10 +70,6 @@ def update(a, b, x, y, n_updates=1, compute_loss=True):
 def initialize_net(x, y, n_neurons=1):
     # initialize neurons  y sampling and setting weights accordingly
     a, b = initialize_neurons(x, y, n_neurons=n_neurons)
-    # print(a.shape)
-    # print(b.shape)
-    print(a)
-    print(b)
 
     # return as initialization for the network the first update for the sampled neurons / weights
     return update(a, b, x, y, n_updates=1)
@@ -97,11 +84,12 @@ def train(n_steps, a, b, x_train, y_train, x_val, y_val, do_val=True, n_samples=
         if n_samples > 0:
             b_hat = sample_neurons(n_samples=n_samples)
             x_1 = np.maximum(np.matmul(x_train, b_hat.T), 0)
-            a_hat = ALPHA * np.mean((y_train - y_hat).reshape(-1, 1) * x_1, axis=0)
+            y_hat = forward(a, b, x_train)
+            a_hat = - ALPHA * np.mean((y_hat - y_train) * x_1, axis=0, keepdims=True)
 
             # add newly sampled neurons / weights to the list
-            a = np.append(a, a_hat)
-            b = np.append(b, b_hat)
+            a = np.hstack((a, a_hat))
+            b = np.vstack((b, b_hat))
 
         # update neurons / weights
         a, b, train_loss = update(a, b, x_train, y_train, n_updates=n_updates)

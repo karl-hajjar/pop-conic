@@ -9,10 +9,10 @@ class TestPopConic(unittest.TestCase):
 
         # Teacher Network
         m = 50  # number of teacher neurons
-        eps = 1e-3
+        eps = 3e-1
 
-        a_star = 0.5 * np.sign(np.random.uniform(size=(1, m)) - 0.5) / m
-        b_star = 2 * np.random.uniform(size=(m, INPUT_DIM)) - 1 + eps * np.random.normal(size=(m, INPUT_DIM)) ** 2
+        a_star = 10 * np.sign(np.random.uniform(size=(1, m)) - 0.5) / m
+        b_star = 2 * np.random.uniform(size=(m, INPUT_DIM)) - 1 - eps * np.random.normal(size=(m, INPUT_DIM)) ** 2
 
         # Data
         self.x_train = np.random.normal(size=(N_TRAIN, INPUT_DIM))
@@ -26,6 +26,15 @@ class TestPopConic(unittest.TestCase):
         n_updates = 1
 
         a, b, _ = initialize_net(self.x_train, self.y_train, n_neurons=n_neurons)
+
+    def test_pop_conic(self):
+        # FULL LOOP (POP-CONIC 1 sample & 1 update per step)
+        n_neurons = 1
+        n_updates = 1
+
+        a, b, _ = initialize_net(self.x_train, self.y_train, n_neurons=n_neurons)
+        a, b, train_losses, val_losses = train(N_STEPS, a, b, self.x_train, self.y_train, self.x_val, self.y_val,
+                                               n_samples=n_neurons, n_updates=n_updates)
 
 
 if __name__ == '__main__':

@@ -29,6 +29,8 @@ var/
 
 # Jupyter
 .ipynb_checkpoints
+TD-rubbish.ipynb
+pop_conic/notebooks/TD-rubbish.ipynb
 
 # code generated data
 figures
